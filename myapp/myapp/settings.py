@@ -106,3 +106,9 @@ STATIC_URL = '/static/'
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
+
+BRAINTREE = {
+    'merchant_id': os.environ.get('BRAINTREE_MERCHANT_ID', ''),
+    'public_key': os.environ.get('BRAINTREE_PUBLIC_KEY', ''),
+    'private_key': os.environ.get('BRAINTREE_PRIVATE_KEY', ''),
+}
