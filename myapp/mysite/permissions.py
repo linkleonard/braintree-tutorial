@@ -8,3 +8,9 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
 
         return obj.payer == request.user
+
+
+class AnonymousCanCreate(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return view.action == 'create'

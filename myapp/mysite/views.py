@@ -4,11 +4,12 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
+from rest_condition import And, Or
 from django.conf import settings
 
 from mysite.models import Payment
 from mysite.serializers import PaymentSerializer, UserSerializer
-from mysite.permissions import IsOwnerOrReadOnly
+from mysite.permissions import IsOwnerOrReadOnly, AnonymousCanCreate
 
 import braintree
 
@@ -29,10 +30,10 @@ class PaymentFailed(APIException):
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly,
-        )
+    permission_classes = [
+        Or(AnonymousCanCreate,
+            And(permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly))
+    ]
 
     def perform_create(self, serializer):
         # Ignore if user submits invalid data.
@@ -43,7 +44,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
             })
 
             if result.is_success:
-                serializer.save(payer=self.request.user)
+                user = (
+                    self.request.user if self.request.user.is_authenticated()
+                    else None
+                )
+                serializer.save(payer=user)
             else:
                 # The payment failed.
                 # TODO: Handle it via Rollbar, logging, etc...
